@@ -1,0 +1,175 @@
+<Window x:Class="msOps.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
+        mc:Ignorable="d"
+        Title="msOps"
+        Height="680" Width="1000"
+        Background="Transparent"
+        WindowStyle="None"
+        ResizeMode="CanResize"
+        AllowsTransparency="True">
+    <Border Background="{DynamicResource WindowBackgroundBrush}"
+            CornerRadius="12"
+            BorderBrush="{DynamicResource BorderBrush}"
+            BorderThickness="1">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+        <!-- Custom Title Bar -->
+        <Border Grid.Row="0" Background="{DynamicResource WindowBackgroundBrush}"
+                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1"
+                CornerRadius="12,12,0,0">
+            <Grid Height="42" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Top-right Exit button -->
+                <Button Grid.Column="2" x:Name="CloseWindowButton" Content="✕"
+                        Style="{StaticResource TitlebarCloseButton}" Click="CloseButton_Click"
+                        shell:WindowChrome.IsHitTestVisibleInChrome="True"
+                        HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,12,0" ToolTip="Close"/>
+
+                <!-- Title -->
+                <TextBlock Grid.Column="1" Text="msOps - Network Operations Helper"
+                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                           Foreground="{DynamicResource TextSecondaryBrush}"/>
+            </Grid>
+        </Border>
+
+        <!-- Content -->
+        <Grid Grid.Row="1" Margin="12">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <!-- Tabs -->
+            <TabControl Grid.Row="0" Grid.RowSpan="2">
+
+                <!-- HTTP Service Tab -->
+                <TabItem Header="HTTP Service">
+                    <Grid Margin="8,12,8,8">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- URL Input -->
+                        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,10">
+                            <TextBlock Text="URL" Width="50" VerticalAlignment="Center"/>
+                            <TextBox x:Name="HttpUrlTextBox" Width="500" Text="" KeyDown="HttpUrlTextBox_KeyDown"/>
+                            <Button x:Name="HttpGetButton" Content="GET" Width="80" Margin="10,0,0,0" Click="HttpGetButton_Click" Style="{StaticResource AccentButton}"/>
+                            <Button x:Name="HttpPostButton" Content="POST" Width="80" Margin="6,0,0,0" Click="HttpPostButton_Click" Style="{StaticResource AccentButton}"/>
+                        </StackPanel>
+
+                        <!-- POST Data Input -->
+                        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,10">
+                            <TextBlock Text="POST Data" Width="80" VerticalAlignment="Center"/>
+                            <TextBox x:Name="HttpPostDataTextBox" Width="500" KeyDown="HttpPostDataTextBox_KeyDown"/>
+                        </StackPanel>
+
+                        <!-- Status -->
+                        <TextBlock x:Name="HttpStatusTextBlock" Grid.Row="2" Margin="0,0,0,10"/>
+
+                        <!-- Response Summary and Controls -->
+                        <Grid Grid.Row="3">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+
+                            <!-- Response Summary -->
+                            <TextBox x:Name="HttpSummaryTextBox" Grid.Row="0" TextWrapping="Wrap" Height="100"
+                                     IsReadOnly="True" Margin="0,0,0,5"
+                                     VerticalScrollBarVisibility="Auto"/>
+
+                            <!-- Expand/Collapse Controls -->
+                            <StackPanel Grid.Row="1" Orientation="Vertical">
+                                <Button x:Name="ExpandButton" Content="Show Full Response" Width="170"
+                                        HorizontalAlignment="Left" Margin="0,5" Click="ExpandButton_Click"
+                                        Style="{StaticResource NeutralButton}"/>
+                                <TextBox x:Name="HttpResponseTextBox" Visibility="Collapsed"
+                                         TextWrapping="Wrap" IsReadOnly="True"
+                                         Height="300" MaxHeight="300" Padding="8,8,8,10"
+                                         VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
+                                         AcceptsReturn="True"
+                                         ScrollViewer.CanContentScroll="False"/>
+                            </StackPanel>
+                        </Grid>
+                    </Grid>
+                </TabItem>
+
+                <!-- SSL Checker Tab -->
+                <TabItem Header="SSL Checker">
+                    <Grid Margin="8,12,8,8">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- Protocol and Hostname Input -->
+                        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,10">
+                            <TextBlock Text="Protocol" Width="60" VerticalAlignment="Center"/>
+                            <RadioButton x:Name="SslRadioButton" Content="SSL/TLS" IsChecked="True" Margin="5,0,15,0" VerticalAlignment="Center" Checked="ProtocolRadioButton_Changed"/>
+                            <RadioButton x:Name="HttpRadioButton" Content="HTTP" Margin="0,0,20,0" VerticalAlignment="Center" Checked="ProtocolRadioButton_Changed"/>
+                            <TextBlock Text="Hostname" Width="70" VerticalAlignment="Center"/>
+                            <TextBox x:Name="SslHostnameTextBox" Width="220" Text="" KeyDown="SslHostnameTextBox_KeyDown"/>
+                            <TextBlock Text="Port" Width="40" Margin="10,0,0,0" VerticalAlignment="Center"/>
+                            <TextBox x:Name="SslPortTextBox" Width="70" Text="443" KeyDown="SslPortTextBox_KeyDown"/>
+                            <Button x:Name="SslCheckButton" Content="Check" Width="90" Margin="10,0,0,0" Click="SslCheckButton_Click" Style="{StaticResource AccentButton}"/>
+                        </StackPanel>
+
+                        <!-- Status -->
+                        <TextBlock x:Name="SslStatusTextBlock" Grid.Row="1" Margin="0,0,0,10"/>
+
+                        <!-- SSL Results -->
+                        <ScrollViewer Grid.Row="2">
+                            <TextBox x:Name="SslResultsTextBox" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"
+                                     IsReadOnly="True"/>
+                        </ScrollViewer>
+                    </Grid>
+                </TabItem>
+
+                <!-- Redirect Checker Tab -->
+                <TabItem Header="Redirect Checker">
+                    <Grid Margin="8,12,8,8">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- URL Input -->
+                        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,10">
+                            <TextBlock Text="URL" Width="50" VerticalAlignment="Center"/>
+                            <TextBox x:Name="RedirectUrlTextBox" Width="500" Text="" KeyDown="RedirectUrlTextBox_KeyDown"/>
+                            <Button x:Name="RedirectCheckButton" Content="Check Redirects" Width="120" Margin="10,0,0,0" Click="RedirectCheckButton_Click" Style="{StaticResource AccentButton}"/>
+                        </StackPanel>
+
+                        <!-- Status -->
+                        <TextBlock x:Name="RedirectStatusTextBlock" Grid.Row="1" Margin="0,0,0,10"/>
+
+                        <!-- Redirect Results -->
+                        <ScrollViewer Grid.Row="2">
+                            <TextBox x:Name="RedirectResultsTextBox" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"
+                                     IsReadOnly="True"/>
+                        </ScrollViewer>
+                    </Grid>
+                </TabItem>
+            </TabControl>
+        </Grid>
+        </Grid>
+    </Border>
+</Window>
