@@ -27,7 +27,7 @@ public class TrayIconManager : IDisposable
         contextMenu.Items.Add("Exit", null, OnExitClicked);
 
         _notifyIcon.ContextMenuStrip = contextMenu;
-        _notifyIcon.DoubleClick += OnDoubleClick;
+        _notifyIcon.MouseClick += OnMouseClick;
     }
 
     private static Icon? LoadAppIcon()
@@ -67,9 +67,13 @@ public class TrayIconManager : IDisposable
         ShowWindow?.Invoke();
     }
 
-    private void OnDoubleClick(object? sender, EventArgs e)
+    private void OnMouseClick(object? sender, MouseEventArgs e)
     {
-        ShowWindow?.Invoke();
+        // Only respond to left clicks, let right clicks show the context menu
+        if (e.Button == MouseButtons.Left)
+        {
+            ShowWindow?.Invoke();
+        }
     }
 
     private void OnExitClicked(object? sender, EventArgs e)
