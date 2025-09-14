@@ -1,0 +1,33 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <AssemblyTitle>NetKit</AssemblyTitle>
+    <Product>NetKit</Product>
+    <!-- Use app icon if present at Assets\App.ico (no-op if missing) -->
+    <ApplicationIcon Condition="Exists('Assets\\App.ico')">Assets\App.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Ensure App.xaml is treated as the WPF ApplicationDefinition -->
+    <Page Remove="UI\App.xaml" />
+    <ApplicationDefinition Include="UI\App.xaml" />
+    <!-- Optional: keep XAML/code-behind pairing in Solution Explorer -->
+    <Compile Update="UI\App.xaml.cs">
+      <DependentUpon>App.xaml</DependentUpon>
+    </Compile>
+    <Compile Update="UI\MainWindow.xaml.cs">
+      <DependentUpon>MainWindow.xaml</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="DnsClient" Version="1.7.0" />
+  </ItemGroup>
+
+</Project>

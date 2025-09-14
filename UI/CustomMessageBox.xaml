@@ -1,0 +1,41 @@
+<Window x:Class="NetKit.CustomMessageBox"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="NetKit"
+        Height="180" Width="400"
+        Background="Transparent"
+        WindowStyle="None"
+        ResizeMode="NoResize"
+        AllowsTransparency="True"
+        WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False">
+    <Border Background="{DynamicResource WindowBackgroundBrush}"
+            CornerRadius="12"
+            BorderBrush="{DynamicResource BorderBrush}"
+            BorderThickness="1">
+        <Grid Margin="20">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Message Text -->
+            <TextBlock x:Name="MessageText" Grid.Row="0"
+                       Text="Message goes here"
+                       Foreground="{DynamicResource TextBrush}"
+                       FontSize="14"
+                       TextWrapping="Wrap"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Center"
+                       Margin="0,10,0,20"/>
+
+            <!-- OK Button -->
+            <Button x:Name="OkButton" Grid.Row="1"
+                    Content="OK"
+                    Width="80"
+                    HorizontalAlignment="Center"
+                    Click="OkButton_Click"
+                    Style="{StaticResource AccentButton}"/>
+        </Grid>
+    </Border>
+</Window>

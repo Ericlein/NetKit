@@ -1,0 +1,23 @@
+<Application x:Class="NetKit.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:NetKit">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Theme.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+
+            <!-- Global font -->
+            <!-- Modern, clean fonts with fallbacks -->
+            <Style TargetType="TextElement">
+                <Setter Property="FontFamily" Value="Segoe UI Variable, Inter, Segoe UI, Arial"/>
+                <Setter Property="FontSize" Value="14"/>
+            </Style>
+            <Style TargetType="Control">
+                <Setter Property="FontFamily" Value="Segoe UI Variable, Inter, Segoe UI, Arial"/>
+                <Setter Property="FontSize" Value="14"/>
+            </Style>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>
