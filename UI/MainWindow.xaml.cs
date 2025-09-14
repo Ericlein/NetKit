@@ -710,17 +710,18 @@ public partial class MainWindow : Window
                 // Get the captured hotkey
                 if (hotkeyWindow.GetCapturedHotkey(out bool useCtrl, out bool useAlt, out bool useWin, out bool useShift, out int virtualKey, out string keyDisplay))
                 {
-                    // Build modifiers for Win32 API (ignoring Shift as it's handled differently)
+                    // Build modifiers for Win32 API
                     int modifiers = 0;
                     if (useCtrl) modifiers |= 0x0002; // MOD_CONTROL
                     if (useAlt) modifiers |= 0x0001; // MOD_ALT
                     if (useWin) modifiers |= 0x0008; // MOD_WIN
+                    if (useShift) modifiers |= 0x0004; // MOD_SHIFT
 
                     // Try to register the new hotkey
                     if (globalHotkey.Register(modifiers, virtualKey))
                     {
                         // Save settings (store the display representation for persistence)
-                        settingsService.UpdateHotkey(useCtrl, useAlt, useWin, virtualKey, keyDisplay);
+                        settingsService.UpdateHotkey(useCtrl, useAlt, useWin, useShift, virtualKey, keyDisplay);
 
                         // Update tray icon text
                         trayIconManager.UpdateHotkeyText(settingsService.GetHotkeyDisplayText());
@@ -732,7 +733,7 @@ public partial class MainWindow : Window
 
                         // Revert to previous settings
                         var prevSettings = settingsService.Settings.Hotkey;
-                        globalHotkey.UpdateHotkey(prevSettings.UseCtrl, prevSettings.UseAlt, prevSettings.UseWin, prevSettings.VirtualKeyCode);
+                        globalHotkey.UpdateHotkey(prevSettings.UseCtrl, prevSettings.UseAlt, prevSettings.UseWin, prevSettings.UseShift, prevSettings.VirtualKeyCode);
                     }
                 }
             }

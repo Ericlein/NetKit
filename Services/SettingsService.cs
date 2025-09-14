@@ -9,6 +9,7 @@ public class HotkeySettings
     public bool UseCtrl { get; set; }
     public bool UseAlt { get; set; }
     public bool UseWin { get; set; } = true;
+    public bool UseShift { get; set; }
     public int VirtualKeyCode { get; set; } = 0xDE; // Default to apostrophe
     public string KeyDisplay { get; set; } = "'";
 }
@@ -74,11 +75,12 @@ public class SettingsService
         }
     }
 
-    public void UpdateHotkey(bool useCtrl, bool useAlt, bool useWin, int virtualKeyCode, string keyDisplay)
+    public void UpdateHotkey(bool useCtrl, bool useAlt, bool useWin, bool useShift, int virtualKeyCode, string keyDisplay)
     {
         _settings.Hotkey.UseCtrl = useCtrl;
         _settings.Hotkey.UseAlt = useAlt;
         _settings.Hotkey.UseWin = useWin;
+        _settings.Hotkey.UseShift = useShift;
         _settings.Hotkey.VirtualKeyCode = virtualKeyCode;
         _settings.Hotkey.KeyDisplay = keyDisplay;
         SaveSettings();
@@ -91,6 +93,7 @@ public class SettingsService
         if (_settings.Hotkey.UseCtrl) modifiers.Add("Ctrl");
         if (_settings.Hotkey.UseAlt) modifiers.Add("Alt");
         if (_settings.Hotkey.UseWin) modifiers.Add("Win");
+        if (_settings.Hotkey.UseShift) modifiers.Add("Shift");
 
         var modifierText = modifiers.Count > 0 ? string.Join(" + ", modifiers) + " + " : "";
         return $"{modifierText}{_settings.Hotkey.KeyDisplay}";

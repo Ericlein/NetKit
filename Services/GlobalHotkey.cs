@@ -11,6 +11,7 @@ public class GlobalHotkey : IDisposable
     private const int MOD_CONTROL = 0x0002;
     private const int MOD_ALT = 0x0001;
     private const int MOD_WIN = 0x0008;
+    private const int MOD_SHIFT = 0x0004;
 
     private readonly int _id;
     private readonly IntPtr _hWnd;
@@ -63,12 +64,13 @@ public class GlobalHotkey : IDisposable
         }
     }
 
-    public bool UpdateHotkey(bool useCtrl, bool useAlt, bool useWin, int virtualKey)
+    public bool UpdateHotkey(bool useCtrl, bool useAlt, bool useWin, bool useShift, int virtualKey)
     {
         int modifiers = 0;
         if (useCtrl) modifiers |= MOD_CONTROL;
         if (useAlt) modifiers |= MOD_ALT;
         if (useWin) modifiers |= MOD_WIN;
+        if (useShift) modifiers |= MOD_SHIFT;
 
         return Register(modifiers, virtualKey);
     }

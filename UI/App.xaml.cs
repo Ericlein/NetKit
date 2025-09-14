@@ -76,16 +76,16 @@ public partial class App : System.Windows.Application
             source?.AddHook(WndProc);
 
             // Register the hotkey with saved settings
-            if (_globalHotkey.UpdateHotkey(settings.UseCtrl, settings.UseAlt, settings.UseWin, settings.VirtualKeyCode))
+            if (_globalHotkey.UpdateHotkey(settings.UseCtrl, settings.UseAlt, settings.UseWin, settings.UseShift, settings.VirtualKeyCode))
             {
                 _trayIconManager?.UpdateHotkeyText(_settingsService.GetHotkeyDisplayText());
             }
             else
             {
                 // If saved hotkey fails, try default Win+'
-                if (_globalHotkey.UpdateHotkey(false, false, true, 0xDE))
+                if (_globalHotkey.UpdateHotkey(false, false, true, false, 0xDE))
                 {
-                    _settingsService.UpdateHotkey(false, false, true, 0xDE, "'");
+                    _settingsService.UpdateHotkey(false, false, true, false, 0xDE, "'");
                     _trayIconManager?.UpdateHotkeyText(_settingsService.GetHotkeyDisplayText());
                 }
             }
