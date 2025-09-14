@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
 
-namespace msOps;
+namespace NetKit;
 
 public class RedirectResult
 {
@@ -43,7 +43,7 @@ public class RedirectChecker : IDisposable
         };
 
         _httpClient.DefaultRequestHeaders.Add("User-Agent",
-            "msOps-RedirectChecker/1.0 (Windows)");
+            "NetKit-RedirectChecker/1.0 (Windows)");
     }
 
     public async Task<RedirectResult> CheckRedirectsAsync(string url, int maxRedirects = 10)
