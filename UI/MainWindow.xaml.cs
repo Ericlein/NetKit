@@ -10,8 +10,9 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Windows.Shell;
+using System.Windows.Interop;
 
-namespace msOps;
+namespace NetKit;
 
 /// <summary>
 /// Interaction logic for MainWindow.xaml
@@ -21,8 +22,10 @@ public partial class MainWindow : Window
     private readonly HttpService _httpService;
     private readonly SslChecker _sslChecker;
     private readonly RedirectChecker _redirectChecker;
+    private readonly DnsLookup _dnsLookup;
+    private readonly SettingsService _settingsService;
 
-    public MainWindow()
+    public MainWindow(SettingsService settingsService)
     {
         try
         {
@@ -30,6 +33,9 @@ public partial class MainWindow : Window
             _httpService = new HttpService();
             _sslChecker = new SslChecker();
             _redirectChecker = new RedirectChecker();
+            _dnsLookup = new DnsLookup();
+            _settingsService = settingsService;
+
 
             // Enable borderless window chrome with resize and caption area
             var chrome = new WindowChrome
@@ -41,12 +47,43 @@ public partial class MainWindow : Window
                 UseAeroCaptionButtons = false
             };
             WindowChrome.SetWindowChrome(this, chrome);
+
+            // Try to set the window icon to the app's EXE icon
+            TrySetWindowIconFromExe();
         }
         catch (Exception ex)
         {
             CustomMessageBox.Show($"MainWindow Constructor Error: {ex.Message}\n\nStack Trace: {ex.StackTrace}", "Window Error");
             throw;
         }
+    }
+
+
+
+    public void ShowWindow()
+    {
+        if (Visibility == Visibility.Hidden)
+        {
+            Show();
+            WindowState = WindowState.Normal;
+            Activate();
+            Focus();
+        }
+        else
+        {
+            HideWindow();
+        }
+    }
+
+    private void HideWindow()
+    {
+        Hide();
+    }
+
+    private void MainWindow_Deactivated(object sender, EventArgs e)
+    {
+        // Hide window when it loses focus (click outside)
+        HideWindow();
     }
 
     private void ProtocolRadioButton_Changed(object sender, RoutedEventArgs e)
@@ -101,6 +138,14 @@ public partial class MainWindow : Window
         if (e.Key == Key.Enter)
         {
             RedirectCheckButton_Click(sender, new RoutedEventArgs());
+        }
+    }
+
+    private void DnsHostnameTextBox_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+    {
+        if (e.Key == Key.Enter)
+        {
+            DnsLookupButton_Click(sender, new RoutedEventArgs());
         }
     }
 
@@ -402,6 +447,81 @@ public partial class MainWindow : Window
         RedirectResultsTextBox.Text = output.ToString();
     }
 
+    private async void DnsLookupButton_Click(object sender, RoutedEventArgs e)
+    {
+        var hostname = DnsHostnameTextBox.Text;
+        if (string.IsNullOrWhiteSpace(hostname))
+        {
+            CustomMessageBox.Show(this, "Please enter a domain name");
+            return;
+        }
+
+        var recordType = ((ComboBoxItem)DnsRecordTypeComboBox.SelectedItem)?.Content?.ToString() ?? "A";
+
+        DnsStatusTextBlock.Text = $"Looking up {recordType} records for {hostname}...";
+        DnsResultsTextBox.Text = "";
+
+        try
+        {
+            var result = await _dnsLookup.LookupAsync(hostname, recordType);
+
+            if (result.IsSuccess)
+            {
+                DisplayDnsResult(result);
+                DnsStatusTextBlock.Text = $"DNS lookup completed - {result.Records.Count} record(s) found in {result.QueryTime.TotalMilliseconds:F0}ms";
+                DnsStatusTextBlock.Foreground = (SolidColorBrush)FindResource("SuccessBrush");
+            }
+            else
+            {
+                DnsResultsTextBox.Text = $"Error: {result.Error}";
+                DnsStatusTextBlock.Text = "DNS lookup failed";
+                DnsStatusTextBlock.Foreground = (SolidColorBrush)FindResource("ErrorBrush");
+            }
+        }
+        catch (Exception ex)
+        {
+            DnsResultsTextBox.Text = $"Error: {ex.Message}";
+            DnsStatusTextBlock.Text = "DNS lookup failed";
+            DnsStatusTextBlock.Foreground = (SolidColorBrush)FindResource("ErrorBrush");
+        }
+    }
+
+    private void DisplayDnsResult(DnsResult result)
+    {
+        var output = new StringBuilder();
+        output.AppendLine($"=== DNS LOOKUP RESULTS ===");
+        output.AppendLine($"Domain: {result.Domain}");
+        output.AppendLine($"Record Type: {result.RecordType}");
+        output.AppendLine($"DNS Server: {result.DnsServer}");
+        output.AppendLine($"Query Time: {result.QueryTime.TotalMilliseconds:F0}ms");
+        output.AppendLine($"Records Found: {result.Records.Count}");
+        output.AppendLine();
+
+        if (result.Records.Count > 0)
+        {
+            foreach (var record in result.Records)
+            {
+                output.AppendLine($"=== {record.Type} RECORD ===");
+                output.AppendLine($"Name: {record.Name}");
+                output.AppendLine($"Value: {record.Value}");
+
+                if (record.TTL > 0)
+                    output.AppendLine($"TTL: {record.TTL}");
+
+                if (record.Priority > 0)
+                    output.AppendLine($"Priority: {record.Priority}");
+
+                output.AppendLine();
+            }
+        }
+        else
+        {
+            output.AppendLine("No records found for this domain and record type.");
+        }
+
+        DnsResultsTextBox.Text = output.ToString();
+    }
+
     private void DisplayHttpResult(HttpResult result)
     {
         var summary = new StringBuilder();
@@ -508,7 +628,8 @@ public partial class MainWindow : Window
 
     private void CloseButton_Click(object sender, RoutedEventArgs e)
     {
-        Close();
+        // In a tray app, close should hide so it can be re-opened from the tray/hotkey
+        HideWindow();
     }
 
     private void ToggleMaximize()
@@ -516,11 +637,109 @@ public partial class MainWindow : Window
         WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
     }
 
+    private void TrySetWindowIconFromExe()
+    {
+        try
+        {
+            var exe = System.Diagnostics.Process.GetCurrentProcess().MainModule?.FileName;
+            if (!string.IsNullOrEmpty(exe))
+            {
+                using var icon = System.Drawing.Icon.ExtractAssociatedIcon(exe);
+                if (icon != null)
+                {
+                    var source = System.Windows.Interop.Imaging.CreateBitmapSourceFromHIcon(
+                        icon.Handle,
+                        Int32Rect.Empty,
+                        BitmapSizeOptions.FromEmptyOptions());
+                    source.Freeze();
+                    this.Icon = source;
+                }
+            }
+        }
+        catch
+        {
+            // ignore icon failures
+        }
+    }
+
+    protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
+    {
+        // Gracefully shutdown DNS operations before window closes
+        try
+        {
+            _dnsLookup?.Shutdown();
+        }
+        catch
+        {
+            // Ignore shutdown errors
+        }
+
+        base.OnClosing(e);
+    }
+
     protected override void OnClosed(EventArgs e)
     {
         _httpService?.Dispose();
         _redirectChecker?.Dispose();
+        _dnsLookup?.Dispose();
         base.OnClosed(e);
     }
-}
 
+    private void HotkeyButton_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            var app = (App)System.Windows.Application.Current;
+            var settingsService = app.GetSettingsService();
+            var globalHotkey = app.GetGlobalHotkey();
+            var trayIconManager = app.GetTrayIconManager();
+
+            if (settingsService == null || globalHotkey == null || trayIconManager == null)
+            {
+                CustomMessageBox.Show("Services not available", "Configuration Error");
+                return;
+            }
+
+            var hotkeyWindow = new HotkeyConfigWindow(settingsService)
+            {
+                Owner = this
+            };
+
+            if (hotkeyWindow.ShowDialog() == true && hotkeyWindow.HotkeyChanged)
+            {
+                // Get the captured hotkey
+                if (hotkeyWindow.GetCapturedHotkey(out bool useCtrl, out bool useAlt, out bool useWin, out bool useShift, out int virtualKey, out string keyDisplay))
+                {
+                    // Build modifiers for Win32 API (ignoring Shift as it's handled differently)
+                    int modifiers = 0;
+                    if (useCtrl) modifiers |= 0x0002; // MOD_CONTROL
+                    if (useAlt) modifiers |= 0x0001; // MOD_ALT
+                    if (useWin) modifiers |= 0x0008; // MOD_WIN
+
+                    // Try to register the new hotkey
+                    if (globalHotkey.Register(modifiers, virtualKey))
+                    {
+                        // Save settings (store the display representation for persistence)
+                        settingsService.UpdateHotkey(useCtrl, useAlt, useWin, virtualKey, keyDisplay);
+
+                        // Update tray icon text
+                        trayIconManager.UpdateHotkeyText(settingsService.GetHotkeyDisplayText());
+                    }
+                    else
+                    {
+                        // Registration failed - show error message
+                        CustomMessageBox.Show("Failed to register the hotkey. The combination might already be in use by another application.", "Hotkey Registration Failed");
+
+                        // Revert to previous settings
+                        var prevSettings = settingsService.Settings.Hotkey;
+                        globalHotkey.UpdateHotkey(prevSettings.UseCtrl, prevSettings.UseAlt, prevSettings.UseWin, prevSettings.VirtualKeyCode);
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            CustomMessageBox.Show($"Error configuring hotkey: {ex.Message}", "Configuration Error");
+        }
+    }
+}

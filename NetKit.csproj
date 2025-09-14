@@ -7,6 +7,10 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <UseWindowsForms>true</UseWindowsForms>
+    <AssemblyTitle>NetKit</AssemblyTitle>
+    <Product>NetKit</Product>
+    <!-- Use app icon if present at Assets\App.ico (no-op if missing) -->
+    <ApplicationIcon Condition="Exists('Assets\\App.ico')">Assets\App.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
@@ -20,6 +24,10 @@
     <Compile Update="UI\MainWindow.xaml.cs">
       <DependentUpon>MainWindow.xaml</DependentUpon>
     </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="DnsClient" Version="1.7.0" />
   </ItemGroup>
 
 </Project>

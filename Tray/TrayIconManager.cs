@@ -1,46 +1,85 @@
-﻿using System;
+using System;
 using System.Drawing;
-using System.Windows;
+using System.Reflection;
 using System.Windows.Forms;
 
-namespace msOps.Tray
+namespace NetKit;
+
+public class TrayIconManager : IDisposable
 {
-    public class TrayIconManager : IDisposable
+    private NotifyIcon? _notifyIcon;
+
+    public event Action? ShowWindow;
+    public event Action? ExitApplication;
+
+    public TrayIconManager()
     {
-        private NotifyIcon? _notifyIcon;
-
-        public void Initialize()
+        _notifyIcon = new NotifyIcon
         {
-            _notifyIcon = new NotifyIcon
+            Icon = LoadAppIcon() ?? SystemIcons.Application,
+            Visible = true,
+            Text = "NetKit (Win+' to toggle)"
+        };
+
+        var contextMenu = new ContextMenuStrip();
+        contextMenu.Items.Add("Show/Hide Window (Win+')", null, OnShowHideClicked);
+        contextMenu.Items.Add("-"); // Separator
+        contextMenu.Items.Add("Exit", null, OnExitClicked);
+
+        _notifyIcon.ContextMenuStrip = contextMenu;
+        _notifyIcon.DoubleClick += OnDoubleClick;
+    }
+
+    private static Icon? LoadAppIcon()
+    {
+        try
+        {
+            var exe = System.Diagnostics.Process.GetCurrentProcess().MainModule?.FileName;
+            if (!string.IsNullOrEmpty(exe))
             {
-                Icon = SystemIcons.Application,
-                Visible = true,
-                Text = "msOps Helper"
-            };
-
-            var contextMenu = new ContextMenuStrip();
-            contextMenu.Items.Add("Open", null, OnOpenClicked);
-            contextMenu.Items.Add("Exit", null, OnExitClicked);
-
-            _notifyIcon.ContextMenuStrip = contextMenu;
+                var icon = Icon.ExtractAssociatedIcon(exe);
+                return icon;
+            }
         }
-
-        private void OnOpenClicked(object? sender, EventArgs e)
+        catch
         {
-            var window = new msOps.MainWindow();
-            window.Show();
-            window.Activate();
+            // ignore
         }
+        return null;
+    }
 
-        private void OnExitClicked(object? sender, EventArgs e)
+    public void UpdateHotkeyText(string hotkeyText)
+    {
+        if (_notifyIcon != null)
         {
-            System.Windows.Application.Current.Shutdown();
-        }
+            _notifyIcon.Text = $"NetKit ({hotkeyText} to toggle)";
 
-        public void Dispose()
-        {
-            _notifyIcon?.Dispose();
-            GC.SuppressFinalize(this);
+            // Update context menu item text too
+            if (_notifyIcon.ContextMenuStrip?.Items.Count > 0)
+            {
+                _notifyIcon.ContextMenuStrip.Items[0].Text = $"Show/Hide Window ({hotkeyText})";
+            }
         }
+    }
+
+    private void OnShowHideClicked(object? sender, EventArgs e)
+    {
+        ShowWindow?.Invoke();
+    }
+
+    private void OnDoubleClick(object? sender, EventArgs e)
+    {
+        ShowWindow?.Invoke();
+    }
+
+    private void OnExitClicked(object? sender, EventArgs e)
+    {
+        ExitApplication?.Invoke();
+    }
+
+    public void Dispose()
+    {
+        _notifyIcon?.Dispose();
+        GC.SuppressFinalize(this);
     }
 }

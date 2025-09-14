@@ -1,16 +1,20 @@
-<Window x:Class="msOps.MainWindow"
+<Window x:Class="NetKit.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
         mc:Ignorable="d"
-        Title="msOps"
+        Title="NetKit"
         Height="680" Width="1000"
         Background="Transparent"
         WindowStyle="None"
         ResizeMode="CanResize"
-        AllowsTransparency="True">
+        AllowsTransparency="True"
+        ShowInTaskbar="False"
+        WindowStartupLocation="CenterScreen"
+        Visibility="Hidden"
+        Deactivated="MainWindow_Deactivated">
     <Border Background="{DynamicResource WindowBackgroundBrush}"
             CornerRadius="12"
             BorderBrush="{DynamicResource BorderBrush}"
@@ -32,6 +36,13 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
+                <!-- Top-left Hotkey button -->
+                <Button Grid.Column="0" x:Name="HotkeyButton" Content="Hotkey"
+                        Style="{StaticResource TitlebarButton}" Click="HotkeyButton_Click"
+                        shell:WindowChrome.IsHitTestVisibleInChrome="True"
+                        HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10,0,0,0"
+                        ToolTip="Configure global hotkey"/>
+
                 <!-- Top-right Exit button -->
                 <Button Grid.Column="2" x:Name="CloseWindowButton" Content="✕"
                         Style="{StaticResource TitlebarCloseButton}" Click="CloseButton_Click"
@@ -39,7 +50,7 @@
                         HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,12,0" ToolTip="Close"/>
 
                 <!-- Title -->
-                <TextBlock Grid.Column="1" Text="msOps - Network Operations Helper"
+                <TextBlock Grid.Column="1" Text="NetKit"
                            HorizontalAlignment="Center" VerticalAlignment="Center"
                            Foreground="{DynamicResource TextSecondaryBrush}"/>
             </Grid>
@@ -164,6 +175,44 @@
                         <!-- Redirect Results -->
                         <ScrollViewer Grid.Row="2">
                             <TextBox x:Name="RedirectResultsTextBox" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"
+                                     IsReadOnly="True"/>
+                        </ScrollViewer>
+                    </Grid>
+                </TabItem>
+
+                <!-- Dig Tab -->
+                <TabItem Header="Dig">
+                    <Grid Margin="8,12,8,8">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- Domain and Record Type Input -->
+                        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,10">
+                            <TextBlock Text="Domain" Width="60" VerticalAlignment="Center"/>
+                            <TextBox x:Name="DnsHostnameTextBox" Width="350" Text="" KeyDown="DnsHostnameTextBox_KeyDown"/>
+                            <TextBlock Text="Type" Width="40" Margin="10,0,0,0" VerticalAlignment="Center"/>
+                            <ComboBox x:Name="DnsRecordTypeComboBox" Width="80" Margin="5,0,0,0" SelectedIndex="0">
+                                <ComboBoxItem Content="A"/>
+                                <ComboBoxItem Content="AAAA"/>
+                                <ComboBoxItem Content="CNAME"/>
+                                <ComboBoxItem Content="MX"/>
+                                <ComboBoxItem Content="TXT"/>
+                                <ComboBoxItem Content="NS"/>
+                                <ComboBoxItem Content="PTR"/>
+                                <ComboBoxItem Content="ALL"/>
+                            </ComboBox>
+                            <Button x:Name="DnsLookupButton" Content="Lookup" Width="90" Margin="10,0,0,0" Click="DnsLookupButton_Click" Style="{StaticResource AccentButton}"/>
+                        </StackPanel>
+
+                        <!-- Status -->
+                        <TextBlock x:Name="DnsStatusTextBlock" Grid.Row="1" Margin="0,0,0,10"/>
+
+                        <!-- DNS Results -->
+                        <ScrollViewer Grid.Row="2">
+                            <TextBox x:Name="DnsResultsTextBox" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"
                                      IsReadOnly="True"/>
                         </ScrollViewer>
                     </Grid>

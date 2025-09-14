@@ -1,10 +1,10 @@
 using System.Windows;
 
-namespace msOps;
+namespace NetKit;
 
 public partial class CustomMessageBox : Window
 {
-    public CustomMessageBox(string message, string title = "msOps")
+    public CustomMessageBox(string message, string title = "NetKit")
     {
         InitializeComponent();
         MessageText.Text = message;
@@ -17,13 +17,13 @@ public partial class CustomMessageBox : Window
         Close();
     }
 
-    public static void Show(string message, string title = "msOps")
+    public static void Show(string message, string title = "NetKit")
     {
         var messageBox = new CustomMessageBox(message, title);
         messageBox.ShowDialog();
     }
 
-    public static void Show(Window owner, string message, string title = "msOps")
+    public static void Show(Window owner, string message, string title = "NetKit")
     {
         var messageBox = new CustomMessageBox(message, title)
         {

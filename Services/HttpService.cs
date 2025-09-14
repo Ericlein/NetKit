@@ -2,7 +2,7 @@
 using System.Text;
 using System.Text.Json;
 
-namespace msOps;
+namespace NetKit;
 
 public class HttpService
 {
@@ -11,7 +11,7 @@ public class HttpService
     public HttpService()
     {
         _httpClient = new HttpClient();
-        _httpClient.DefaultRequestHeaders.Add("User-Agent", "msOps/1.0");
+        _httpClient.DefaultRequestHeaders.Add("User-Agent", "NetKit/1.0");
     }
 
     private string EnsureProtocol(string url)
