@@ -12,6 +12,9 @@ on:
         required: false
         default: 'New release'
 
+permissions:
+  contents: write
+
 jobs:
   build-and-release:
     runs-on: windows-latest
