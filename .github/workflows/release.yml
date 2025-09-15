@@ -1,0 +1,63 @@
+name: Create Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g., v1.0.0)'
+        required: true
+        default: 'v1.0.0'
+      release_notes:
+        description: 'Release notes'
+        required: false
+        default: 'New release'
+
+jobs:
+  build-and-release:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: Restore dependencies
+      run: dotnet restore
+
+    - name: Build regular release
+      run: dotnet build -c Release --no-restore
+
+    - name: Publish single-file release
+      run: dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o ./publish
+
+    - name: Create release package
+      run: |
+        # Create single-file release package with just the exe
+        Compress-Archive -Path "./publish/NetKit.exe" -DestinationPath "NetKit-${{ github.event.inputs.version }}.zip"
+      shell: powershell
+
+    - name: Create GitHub Release
+      uses: actions/create-release@v1
+      id: create_release
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.event.inputs.version }}
+        release_name: NetKit ${{ github.event.inputs.version }}
+        body: ${{ github.event.inputs.release_notes }}
+        draft: false
+        prerelease: false
+
+    - name: Upload Release Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./NetKit-${{ github.event.inputs.version }}.zip
+        asset_name: NetKit-${{ github.event.inputs.version }}.zip
+        asset_content_type: application/zip
