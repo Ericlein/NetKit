@@ -1,3 +1,5 @@
+<img src="Assets/App.png" alt="App Icon" width="64" height="64" > 
+
 # NetKit
 
 A tiny Windows tray app for quick network checks. It runs in the system tray and pops open with a global hotkey.
