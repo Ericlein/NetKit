@@ -27,22 +27,32 @@ jobs:
 
     - name: Restore dependencies
       run: dotnet restore
+      shell: pwsh
 
     - name: Build regular release
       run: dotnet build -c Release --no-restore
+      shell: pwsh
 
     - name: Publish single-file release
       run: dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o ./publish
+      shell: pwsh
 
     - name: Create release package
       run: |
-        # Create single-file release package with just the exe
-        Compress-Archive -Path "./publish/NetKit.exe" -DestinationPath "NetKit-${{ github.event.inputs.version }}.zip"
-      shell: powershell
+        Compress-Archive -Path ".\publish\NetKit.exe" -DestinationPath "NetKit-$env:VERSION.zip"
+      shell: pwsh
+      env:
+        VERSION: ${{ github.event.inputs.version }}
 
     - name: Create GitHub Release
       run: |
-        gh release create "${{ github.event.inputs.version }}" "./NetKit-${{ github.event.inputs.version }}.zip" --title "NetKit ${{ github.event.inputs.version }}" --notes "${{ github.event.inputs.release_notes }}"
-      shell: powershell
+        $version = $env:VERSION
+        $title = "NetKit $version"
+        $notes = $env:RELEASE_NOTES
+        $notes | Out-File -FilePath "release_notes.txt" -Encoding UTF8 -NoNewline
+        gh release create $version "NetKit-$version.zip" --title $title --notes-file "release_notes.txt"
+      shell: pwsh
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        VERSION: ${{ github.event.inputs.version }}
+        RELEASE_NOTES: ${{ github.event.inputs.release_notes }}
