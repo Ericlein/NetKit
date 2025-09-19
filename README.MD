@@ -9,6 +9,7 @@ A tiny Windows tray app for quick network checks. It runs in the system tray and
 - SSL/TLS certificate details and expiry
 - Redirect chain viewer
 - DNS lookups (A, AAAA, CNAME, MX, TXT, NS, PTR)
+- Integrated terminal (PowerShell, Command Prompt, WSL)
 
 ## Download & Run
 - Windows 10/11.

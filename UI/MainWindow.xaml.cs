@@ -24,6 +24,7 @@ public partial class MainWindow : Window
     private readonly RedirectChecker _redirectChecker;
     private readonly DnsLookup _dnsLookup;
     private readonly SettingsService _settingsService;
+    private readonly TerminalService _terminalService;
 
     public MainWindow(SettingsService settingsService)
     {
@@ -35,6 +36,12 @@ public partial class MainWindow : Window
             _redirectChecker = new RedirectChecker();
             _dnsLookup = new DnsLookup();
             _settingsService = settingsService;
+            _terminalService = new TerminalService();
+
+            // Setup terminal event handlers
+            _terminalService.OutputReceived += OnTerminalOutputReceived;
+            _terminalService.ErrorReceived += OnTerminalErrorReceived;
+            _terminalService.ProcessExited += OnTerminalProcessExited;
 
 
             // Enable borderless window chrome with resize and caption area
@@ -682,6 +689,7 @@ public partial class MainWindow : Window
         _httpService?.Dispose();
         _redirectChecker?.Dispose();
         _dnsLookup?.Dispose();
+        _terminalService?.Dispose();
         base.OnClosed(e);
     }
 
@@ -742,5 +750,149 @@ public partial class MainWindow : Window
         {
             CustomMessageBox.Show($"Error configuring hotkey: {ex.Message}", "Configuration Error");
         }
+    }
+
+    // Terminal Methods
+    private async void StartShellButton_Click(object sender, RoutedEventArgs e)
+    {
+        var shellType = GetSelectedShellType();
+        TerminalStatusTextBlock.Text = $"Starting {shellType}...";
+
+        var success = await _terminalService.StartShellAsync(shellType);
+
+        if (success)
+        {
+            TerminalStatusTextBlock.Text = $"{shellType} running";
+            TerminalStatusTextBlock.Foreground = (SolidColorBrush)FindResource("SuccessBrush");
+            StartShellButton.IsEnabled = false;
+            StopShellButton.IsEnabled = true;
+            CommandInputTextBox.IsEnabled = true;
+            ExecuteCommandButton.IsEnabled = true;
+            PowerShellRadioButton.IsEnabled = false;
+            CmdRadioButton.IsEnabled = false;
+            WslRadioButton.IsEnabled = false;
+            CommandInputTextBox.Focus();
+        }
+        else
+        {
+            TerminalStatusTextBlock.Text = $"Failed to start {shellType}";
+            TerminalStatusTextBlock.Foreground = (SolidColorBrush)FindResource("ErrorBrush");
+        }
+    }
+
+    private void StopShellButton_Click(object sender, RoutedEventArgs e)
+    {
+        _terminalService.Stop();
+        TerminalStatusTextBlock.Text = "Shell stopped";
+        TerminalStatusTextBlock.Foreground = (SolidColorBrush)FindResource("TextSecondaryBrush");
+        StartShellButton.IsEnabled = true;
+        StopShellButton.IsEnabled = false;
+        CommandInputTextBox.IsEnabled = false;
+        ExecuteCommandButton.IsEnabled = false;
+        PowerShellRadioButton.IsEnabled = true;
+        CmdRadioButton.IsEnabled = true;
+        WslRadioButton.IsEnabled = true;
+    }
+
+    private void ClearTerminalButton_Click(object sender, RoutedEventArgs e)
+    {
+        TerminalOutputTextBox.Text = "";
+        _terminalService.ClearOutput();
+    }
+
+    private async void ExecuteCommandButton_Click(object sender, RoutedEventArgs e)
+    {
+        await ExecuteCommand();
+    }
+
+    private async void CommandInputTextBox_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+    {
+        if (e.Key == Key.Enter)
+        {
+            await ExecuteCommand();
+        }
+    }
+
+    private async Task ExecuteCommand()
+    {
+        var command = CommandInputTextBox.Text;
+        if (string.IsNullOrWhiteSpace(command) || !_terminalService.IsRunning)
+            return;
+
+        // Display the command in the output
+        Dispatcher.Invoke(() =>
+        {
+            TerminalOutputTextBox.AppendText($"> {command}\n");
+            CommandInputTextBox.Text = "";
+            ScrollToBottom();
+        });
+
+        await _terminalService.ExecuteCommandAsync(command);
+    }
+
+    private void OnTerminalOutputReceived(object? sender, string output)
+    {
+        Dispatcher.Invoke(() =>
+        {
+            TerminalOutputTextBox.AppendText(output + "\n");
+            ScrollToBottom();
+        });
+    }
+
+    private void OnTerminalErrorReceived(object? sender, string error)
+    {
+        Dispatcher.Invoke(() =>
+        {
+            TerminalOutputTextBox.AppendText($"ERROR: {error}\n");
+            ScrollToBottom();
+        });
+    }
+
+    private void OnTerminalProcessExited(object? sender, EventArgs e)
+    {
+        Dispatcher.Invoke(() =>
+        {
+            TerminalOutputTextBox.AppendText("\n[Process exited]\n");
+            TerminalStatusTextBlock.Text = "Shell exited";
+            TerminalStatusTextBlock.Foreground = (SolidColorBrush)FindResource("TextSecondaryBrush");
+            StartShellButton.IsEnabled = true;
+            StopShellButton.IsEnabled = false;
+            CommandInputTextBox.IsEnabled = false;
+            ExecuteCommandButton.IsEnabled = false;
+            PowerShellRadioButton.IsEnabled = true;
+            CmdRadioButton.IsEnabled = true;
+            WslRadioButton.IsEnabled = true;
+            ScrollToBottom();
+        });
+    }
+
+    private void ShellTypeRadioButton_Changed(object sender, RoutedEventArgs e)
+    {
+        // Only handle selection changes if the terminal service is initialized and the UI is loaded
+        if (_terminalService == null || !IsLoaded)
+            return;
+
+        // If shell is running, stop it when changing shell type
+        if (_terminalService.IsRunning)
+        {
+            StopShellButton_Click(sender, new RoutedEventArgs());
+        }
+    }
+
+    private string GetSelectedShellType()
+    {
+        if (PowerShellRadioButton?.IsChecked == true)
+            return "powershell";
+        else if (CmdRadioButton?.IsChecked == true)
+            return "cmd";
+        else if (WslRadioButton?.IsChecked == true)
+            return "wsl";
+
+        return "powershell";
+    }
+
+    private void ScrollToBottom()
+    {
+        TerminalScrollViewer?.ScrollToEnd();
     }
 }
